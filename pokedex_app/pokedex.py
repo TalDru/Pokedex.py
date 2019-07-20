@@ -42,7 +42,7 @@ def main():
     canvas.pack()
 
     # Background image
-    background_image = PhotoImage(file='Background.ppm')
+    background_image = PhotoImage(file='Background.gif')
     background_label = Label(root, image=background_image)
     background_label.place(relwidth=1, relheight=1)
 
@@ -62,7 +62,7 @@ def main():
 
     # Image frame
     image_pokemon_img = Label(frame_display, bg=TEAL)
-    image_pokemon_img.place(anchor='n', relx=0.2, rely=0.35, relwidth=0.3, relheight=0.4)
+    image_pokemon_img.place(anchor='n', relx=0.25, rely=0.25, relwidth=0.5, relheight=0.6)
 
     # Info table frame, containing frames for each of the parameters' label and content
     frame_info = Frame(frame_display, bg=TEAL)
