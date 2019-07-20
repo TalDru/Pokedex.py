@@ -5,14 +5,11 @@ A simple pokedex implemented in python using the tkinter library
 Author: Tal Druzhinin
 """
 
-# TODO set all texts to the currier font and correct background colors
-
 # Imports
-
-from base64 import encodebytes
+from io import BytesIO
 from tkinter import *
 import requests
-from urllib.request import urlopen
+from PIL import Image as PILImage, ImageTk
 
 # Constants
 
@@ -64,29 +61,29 @@ def main():
     frame_display.place(anchor='n', relx=0.5, rely=0.4, relwidth=0.8, relheight=0.355)
 
     # Image frame
-    image_pokemon_img = Label(frame_display, bg='green')
+    image_pokemon_img = Label(frame_display, bg=TEAL)
     image_pokemon_img.place(anchor='n', relx=0.2, rely=0.35, relwidth=0.3, relheight=0.4)
 
     # Info table frame, containing frames for each of the parameters' label and content
-    frame_info = Frame(frame_display)
+    frame_info = Frame(frame_display, bg=TEAL)
     frame_info.place(anchor='n', relx=0.7, rely=0.2, relwidth=0.55, relheight=0.75)
 
-    label_type_title = Label(frame_info, bg='lime', font=('Courier', 13, 'bold'), text="TYPE:")
+    label_type_title = Label(frame_info, bg=TEAL, font=('Courier', 13, 'bold'), text="TYPE:")
     label_type_title.place(anchor='n', relx=0.5, rely=0.05, relwidth=0.5, relheight=0.1)
 
-    label_type_content = Label(frame_info, bg='lime', font=('Courier', 10, 'bold'), text="TYPE1 | TYPE2")
+    label_type_content = Label(frame_info, bg=TEAL, font=('Courier', 10, 'bold'))
     label_type_content.place(anchor='n', relx=0.5, rely=0.15, relwidth=0.9, relheight=0.1)
 
-    label_height_title = Label(frame_info, bg='lime', font=('Courier', 13, 'bold'), text="HEIGHT:")
+    label_height_title = Label(frame_info, bg=TEAL, font=('Courier', 13, 'bold'), text="HEIGHT:")
     label_height_title.place(anchor='n', relx=0.5, rely=0.3, relwidth=0.5, relheight=0.1)
 
-    label_height_content = Label(frame_info, bg='lime', font=('Courier', 13, 'bold'), text="000 CM")
+    label_height_content = Label(frame_info, bg=TEAL, font=('Courier', 13, 'bold'))
     label_height_content.place(anchor='n', relx=0.5, rely=0.4, relwidth=0.9, relheight=0.1)
 
-    label_weight_title = Label(frame_info, bg='lime', font=('Courier', 13, 'bold'), text="WEIGHT:")
+    label_weight_title = Label(frame_info, bg=TEAL, font=('Courier', 13, 'bold'), text="WEIGHT:")
     label_weight_title.place(anchor='n', relx=0.5, rely=0.55, relwidth=0.5, relheight=0.1)
 
-    label_weight_content = Label(frame_info, bg='lime', font=('Courier', 13, 'bold'), text="000 KG")
+    label_weight_content = Label(frame_info, bg=TEAL, font=('Courier', 13, 'bold'))
     label_weight_content.place(anchor='n', relx=0.5, rely=0.65, relwidth=0.9, relheight=0.1)
 
     # Pokemon's name and ID frame
@@ -191,24 +188,41 @@ def set_data(parsed_entry, name_view, id_view, image_view, type_view, height_vie
     """
     # TODO again, OOP both for the api and the views
 
+    # Set name
     name_view['text'] = parsed_entry['name']
+
+    # Set ID
     id_view['text'] = '#' + str(parsed_entry['id'])
-    # TODO make images appear
+
+    # Set image
+    image = image_from_url(parsed_entry['image'])
+    image_view['image'] = image
+    image_view.photo = image
+
+    # Set types
     type_view['text'] = parsed_entry['type'][0].capitalize() + (
         '|' + parsed_entry['type'][1].capitalize() if len(parsed_entry['type']) > 1 else "")
     # TODO OPTIONAL: color different types
+
+    # Set height
     height_view['text'] = parsed_entry['height'], "CM"
+
+    # Set weight
     weight_view['text'] = parsed_entry['weight'], "KG"
 
 
-def image_by_url(image_url):
+def image_from_url(image_url):
     """
     Get the image from the URL passed by the API
     """
-    image_byt = urlopen(image_url).read()
-    image_b64 = encodebytes(image_byt)
-    photo = PhotoImage(data=image_b64)
-    return photo
+    # Fetch image data from URL
+    response = requests.get(image_url)
+    image_data = BytesIO(response.content)
+
+    # Convert image into a PhotoImage using PIL
+    image = ImageTk.PhotoImage(PILImage.open(image_data))
+
+    return image
 
 
 if __name__ == '__main__':
