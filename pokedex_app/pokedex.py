@@ -6,10 +6,11 @@ Author: Tal Druzhinin
 """
 
 # Imports
-from io import BytesIO
+
 from tkinter import *
-import requests
+from requests import get as request
 from PIL import Image as PILImage, ImageTk
+from io import BytesIO
 
 # Constants
 
@@ -26,7 +27,7 @@ BLACK = "#000"
 NAME_MESSAGE = "Search the name or ID of any pokémon"
 
 # The API service for the pokedex
-API = "https://pokeapi.co/api/v2/pokemon/"
+API_URL = "https://pokeapi.co/api/v2/pokemon/"
 
 
 def main():
@@ -93,6 +94,13 @@ def main():
     label_id = Label(frame_display, bg=TEAL, font=('Courier', 9, 'bold'))
     label_id.place(anchor='n', relx=0.5, rely=0.1, relwidth=0.2, relheight=0.1)
 
+    # Error frame
+    frame_error = Frame(frame_display, bg=TEAL)
+    frame_error.place(anchor='n', relx=0.5, rely=0.8, relwidth=0.9, relheight=0.75)
+
+    label_error = Label(frame_error, bg=TEAL, fg='red', font=('Courier', 13, 'bold'), text="")
+    label_error.place(anchor='n', relx=0.5, rely=0.05, relwidth=1, relheight=0.2)
+
     # Search button frame
     frame_search = Frame(root, bg=TEAL)
     frame_search.place(anchor='n', relx=0.175, rely=0.11, relwidth=0.16, relheight=0.06)
@@ -100,8 +108,10 @@ def main():
     # Search button
     button_search = Button(frame_search, font=('Courier', 9, 'bold'), text="SEARCH", bg=TEAL, borderwidth=0,
                            activebackground=TEAL, activeforeground=GREY,
-                           command=lambda: get_pokemon(entry_pokemon_name, label_name, label_id, image_pokemon_img,
-                                                       label_type_content, label_height_content, label_weight_content))
+                           command=lambda: pokemon_api_request(entry_pokemon_name, label_name, label_id,
+                                                               image_pokemon_img,
+                                                               label_type_content, label_height_content,
+                                                               label_weight_content, label_error))
     button_search.place(relwidth=1, relheight=1)
 
     entry_pokemon_name.bind('<Return>', lambda enter_pressed: button_search.invoke())
@@ -144,71 +154,62 @@ def entry_name_cleaner(event):
         entry.config(fg=BLACK)
 
 
-def get_pokemon(entry, name_view, id_view, image_view, type_view, height_view, weight_view):
+def pokemon_api_request(pokemon_entry, name_view, id_view, image_view, type_view, height_view, weight_view, error_view):
     """
     Get the pokemon info from the API and pass the information to the GUI
     """
-    # TODO make the code more OOP
-    # TODO print if a pokemon was not found or no pokemon name was passed
+    # Clear all previous text
+    clear_labels([name_view, id_view, image_view, type_view, height_view, weight_view, error_view])
 
-    # Get the pokemon's name (or ID)
-    pokemon = entry.get().lower()
+    # Extract the pokemon's name (or ID) from the entry
+    pokemon_text = pokemon_entry.get().lower()
 
-    # If search bar was clear and no pokemon was
-    if not pokemon:
-        print("No Pokemon Passed")
-        # TODO display that to the user
+    # Throw an error if no name or ID were passed
+    if not pokemon_text or pokemon_text == NAME_MESSAGE.lower():
+        error_view['text'] = "Please enter a name or an ID"
         return
 
-    # Send a request to the API with the given pokemon
-    response = requests.get(API + pokemon)
+    # Fetch the information from the API
+    response = request(API_URL + pokemon_text)
 
-    # Try to parse the JSON
+    # Try parsing the JSON
     try:
-        pokedex_entry = response.json()
-        parsed = {'id': pokedex_entry['id'], 'name': pokedex_entry['name'].capitalize(),
-                  'image': pokedex_entry['sprites']['front_default'], 'height': (pokedex_entry['height'] * 10),
-                  'weight': (pokedex_entry['weight'] // 10),
-                  'type': [x['type']['name'] for x in pokedex_entry['types']]}
-        # TODO OOP - class for a pokemon entry
+        entry = response.json()
+        id_number = entry['id']
+        name = entry['name'].capitalize()
+        image = image_from_url(entry['sprites']['front_default'])
+        height = (entry['height'] * 10)
+        weight = (entry['weight'] // 10)
+        types = [x['type']['name'] for x in entry['types']]
 
-        set_data(parsed, name_view, id_view, image_view, type_view, height_view, weight_view)
-
-    except ValueError:
+    except (KeyError, ValueError):
         # If the parsing failed it means the object returned wasn't a JSON
         # This can happen only in case the API did not find the pokemon
-        print("Not Found")
-        # TODO display that to the user
+        error_view['text'] = "Pokemon not found"
         return
 
-
-def set_data(parsed_entry, name_view, id_view, image_view, type_view, height_view, weight_view):
-    """
-    Set the data parsed from the API to the respective views
-    """
-    # TODO again, OOP both for the api and the views
+    # If everything is alright, clear error
+    error_view['text'] = None
 
     # Set name
-    name_view['text'] = parsed_entry['name']
+    name_view['text'] = name
 
     # Set ID
-    id_view['text'] = '#' + str(parsed_entry['id'])
+    id_view['text'] = '#' + str(id_number)
 
     # Set image
-    image = image_from_url(parsed_entry['image'])
     image_view['image'] = image
     image_view.photo = image
 
     # Set types
-    type_view['text'] = parsed_entry['type'][0].capitalize() + (
-        '|' + parsed_entry['type'][1].capitalize() if len(parsed_entry['type']) > 1 else "")
-    # TODO OPTIONAL: color different types
+    type_view['text'] = types[0].capitalize() + ('|' + types[1].capitalize() if len(types) > 1 else "")
+    # TODO color different types
 
     # Set height
-    height_view['text'] = parsed_entry['height'], "CM"
+    height_view['text'] = height, "CM"
 
     # Set weight
-    weight_view['text'] = parsed_entry['weight'], "KG"
+    weight_view['text'] = weight, "KG"
 
 
 def image_from_url(image_url):
@@ -216,13 +217,22 @@ def image_from_url(image_url):
     Get the image from the URL passed by the API
     """
     # Fetch image data from URL
-    response = requests.get(image_url)
+    response = request(image_url)
     image_data = BytesIO(response.content)
 
     # Convert image into a PhotoImage using PIL
     image = ImageTk.PhotoImage(PILImage.open(image_data))
 
     return image
+
+
+def clear_labels(label_list):
+    """
+    Remove all text and images from all labels
+    """
+    for label in label_list:
+        label['text'] = ""
+        label.photo = None
 
 
 if __name__ == '__main__':
