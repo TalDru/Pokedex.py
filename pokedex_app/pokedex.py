@@ -183,8 +183,8 @@ def pokemon_api_request(pokemon_entry, name_view, id_view, image_view, type_view
         types = [x['type']['name'] for x in entry['types']]
 
     except (KeyError, ValueError):
-        # If the parsing failed it means the object returned wasn't a JSON
-        # This can happen only in case the API did not find the pokemon
+        # If the parsing failed it means the object returned wasn't a JSON or did not contain the right fields
+        # This can happen only in case the API did not find the pokemon and returned a 404 or a "pokemon not found" page
         error_view['text'] = "Pokemon not found"
         return
 
