@@ -23,6 +23,12 @@ TEAL = "#0FF"
 GREY = "#666"
 BLACK = "#000"
 
+# Type colors dict
+TYPE_COLORS = {'grass': 'green2', 'fire': 'orange', 'water': 'blue', 'normal': 'light grey', 'flying': 'deep sky blue',
+               'electric': 'yellow', 'psychic': 'deep pink', 'poison': 'magenta', 'bug': 'dark green', 'ice': 'teal',
+               'ghost': 'purple', 'fairy': 'light pink', 'steel': 'silver', 'ground': 'brown4', 'dragon': 'red',
+               'rock': 'gold4', 'fighting': 'saddle brown', 'dark': 'dark grey'}
+
 # Constant strings
 NAME_MESSAGE = "Search the name or ID of any pokémon"
 
@@ -67,13 +73,12 @@ def main():
 
     # Info table frame, containing frames for each of the parameters' label and content
     frame_info = Frame(frame_display, bg=TEAL)
-    frame_info.place(anchor='n', relx=0.7, rely=0.2, relwidth=0.55, relheight=0.75)
+    frame_info.place(anchor='n', relx=0.65, rely=0.2, relwidth=0.55, relheight=0.75)
 
     label_type_title = Label(frame_info, bg=TEAL, font=('Courier', 13, 'bold'), text="TYPE:")
     label_type_title.place(anchor='n', relx=0.5, rely=0.05, relwidth=0.5, relheight=0.1)
 
-    label_type_content = Label(frame_info, bg=TEAL, font=('Courier', 10, 'bold'))
-    label_type_content.place(anchor='n', relx=0.5, rely=0.15, relwidth=0.9, relheight=0.1)
+    label_type_content = Label(frame_info, bg=TEAL, fg='white', font=('Courier', 10, 'bold'))
 
     label_height_title = Label(frame_info, bg=TEAL, font=('Courier', 13, 'bold'), text="HEIGHT:")
     label_height_title.place(anchor='n', relx=0.5, rely=0.3, relwidth=0.5, relheight=0.1)
@@ -198,12 +203,20 @@ def pokemon_api_request(pokemon_entry, name_view, id_view, image_view, type_view
     id_view['text'] = '#' + str(id_number)
 
     # Set image
-    image_view['image'] = image
+    image_view.config(image=image)
     image_view.photo = image
 
     # Set types
-    type_view['text'] = types[0].capitalize() + ('|' + types[1].capitalize() if len(types) > 1 else "")
-    # TODO color different types
+    if len(types) > 1:
+        type_view.place(anchor='n', relx=0.65, rely=0.15, relwidth=0.9, relheight=0.15)
+        for index, pokemon_type in enumerate(types):
+            Label(type_view, text=pokemon_type, bg=TYPE_COLORS[pokemon_type], fg='white',
+                  font=('Courier', 10, 'bold')).grid(column=index, row=0)
+    else:
+        type_view.place(anchor='n', relx=0.5, rely=0.15, relwidth=0.4, relheight=0.14)
+        type_view['font'] = ('Courier', 10, 'bold')
+        type_view['text'] = types[0]
+        type_view['bg'] = TYPE_COLORS[types[0]]
 
     # Set height
     height_view['text'] = height, "CM"
@@ -231,8 +244,12 @@ def clear_labels(label_list):
     Remove all text and images from all labels
     """
     for label in label_list:
-        label['text'] = ""
-        label.photo = None
+        label.config(text="")
+        label.config(image="")
+        label.config(bg=TEAL)
+        child_list = label.grid_slaves()
+        for l in child_list:
+            l.destroy()
 
 
 if __name__ == '__main__':
