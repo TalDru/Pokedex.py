@@ -25,7 +25,7 @@ BLACK = "#000"
 
 # Type colors dict
 TYPE_COLORS = {'grass': 'green2', 'fire': 'orange', 'water': 'blue', 'normal': 'light grey', 'flying': 'deep sky blue',
-               'electric': 'yellow', 'psychic': 'deep pink', 'poison': 'magenta', 'bug': 'dark green', 'ice': 'teal',
+               'electric': 'gold3', 'psychic': 'deep pink', 'poison': 'magenta', 'bug': 'dark green', 'ice': 'teal',
                'ghost': 'purple', 'fairy': 'light pink', 'steel': 'silver', 'ground': 'brown4', 'dragon': 'red',
                'rock': 'gold4', 'fighting': 'saddle brown', 'dark': 'dark grey'}
 
@@ -42,7 +42,7 @@ BG_IMAGE_B64 = r"""R0lGODlhRAE/AvcAAAEBAQwAAQUECQoLCxQAARkAABEHCBQUFBcaGg8RDyQAA
 def main():
     # Root TK object
     root = Tk()
-    root.title("Pokédex")
+    root.title("Pokédex.py")
 
     # Disable resizing to keep the correct resolution
     root.resizable(False, False)
@@ -217,7 +217,7 @@ def pokemon_api_request(pokemon_entry, name_view, id_view, image_view, type_view
             Label(type_view, text=pokemon_type, bg=TYPE_COLORS[pokemon_type], fg='white',
                   font=('Courier', 10, 'bold')).grid(column=index, row=0)
     else:
-        type_view.place(anchor='n', relx=0.5, rely=0.15, relwidth=0.4, relheight=0.14)
+        type_view.place(anchor='n', relx=0.5, rely=0.15, relwidth=0.45, relheight=0.14)
         type_view['font'] = ('Courier', 10, 'bold')
         type_view['text'] = types[0]
         type_view['bg'] = TYPE_COLORS[types[0]]
